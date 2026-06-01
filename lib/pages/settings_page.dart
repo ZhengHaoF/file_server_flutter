@@ -180,7 +180,7 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           TextButton(
             onPressed: _saveSettings,
-            child: const Text('保存', style: TextStyle(color: Colors.white)),
+            child: const Text('保存', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
