@@ -47,3 +47,4 @@ app.*.map.json
 
 # Web project (independent Vue project, not part of this repo)
 /网页项目/
+.codegraph/
