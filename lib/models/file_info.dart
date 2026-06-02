@@ -37,11 +37,10 @@ class FileInfo {
     }
 
     String? fileUrl;
-    String? filePath;
+    final filePath = currentPath.isNotEmpty ? '$currentPath/$name' : name;
     if (!isDirectory) {
       final cleanPath = currentPath.isNotEmpty ? '/$currentPath' : '';
       fileUrl = '$serverBaseUrl/getFile$cleanPath/${Uri.encodeComponent(name)}';
-      filePath = currentPath.isNotEmpty ? '$currentPath/$name' : name;
     }
 
     return FileInfo(

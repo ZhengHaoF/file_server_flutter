@@ -94,7 +94,6 @@ class ApiService {
 
 class _NetworkLogInterceptor extends Interceptor {
   final NetworkLogService _logService;
-  final Map<int, DateTime> _startTimes = {};
 
   _NetworkLogInterceptor(this._logService);
 

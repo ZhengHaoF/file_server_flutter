@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +14,7 @@ class AudioPlayerPage extends StatefulWidget {
 
 class _AudioPlayerPageState extends State<AudioPlayerPage> {
   late AudioPlayer _player;
+  final List<StreamSubscription> _subscriptions = [];
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
@@ -24,36 +27,40 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
   }
 
   Future<void> _initPlayer() async {
-    _player.onDurationChanged.listen((duration) {
-      if (mounted) setState(() => _duration = duration);
-    });
-
-    _player.onPositionChanged.listen((position) {
-      if (mounted) setState(() => _position = position);
-    });
-
-    _player.onPlayerStateChanged.listen((state) {
-      if (mounted) {
-        setState(() {
-          _isPlaying = state == PlayerState.playing;
-        });
-      }
-    });
-
-    _player.onPlayerComplete.listen((_) {
-      if (mounted) {
-        setState(() {
-          _isPlaying = false;
-          _position = Duration.zero;
-        });
-      }
-    });
+    _subscriptions.add(
+      _player.onDurationChanged.listen((duration) {
+        if (mounted) setState(() => _duration = duration);
+      }),
+    );
+    _subscriptions.add(
+      _player.onPositionChanged.listen((position) {
+        if (mounted) setState(() => _position = position);
+      }),
+    );
+    _subscriptions.add(
+      _player.onPlayerStateChanged.listen((state) {
+        if (mounted) setState(() => _isPlaying = state == PlayerState.playing);
+      }),
+    );
+    _subscriptions.add(
+      _player.onPlayerComplete.listen((_) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = false;
+            _position = Duration.zero;
+          });
+        }
+      }),
+    );
 
     await _player.setSourceUrl(widget.url);
   }
 
   @override
   void dispose() {
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
     _player.dispose();
     super.dispose();
   }

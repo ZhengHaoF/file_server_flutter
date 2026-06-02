@@ -41,6 +41,13 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    {{flutter_bootstrap_js}}
+    _flutter.loader.load({
+      config: {
+        canvasKitBaseUrl: "canvaskit/"
+      }
+    });
+  </script>
 </body>
 </html>
