@@ -122,11 +122,29 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _clearCache() async {
+  void _restoreDefaults() async {
     await _storage.clear();
     if (mounted) {
+      setState(() {
+        _imgSize = _storage.imgSize;
+        _columns = _storage.columns;
+        _playMode = _storage.playMode;
+        _fileSort = _storage.fileSort;
+        _folderSort = _storage.folderSort;
+        _onlyShowImages = _storage.onlyShowImages;
+        _viewOriginalImage = _storage.viewOriginalImage;
+        _videoThumbnail = _storage.videoThumbnail;
+        _serverBaseUrl = _storage.serverBaseUrl;
+
+        try {
+          final colorStr = _storage.themeColor.replaceAll('#', '');
+          _themeColor = Color(int.parse('FF$colorStr', radix: 16));
+        } catch (e) {
+          _themeColor = const Color(0xFFf6823b);
+        }
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('缓存已清除')),
+        const SnackBar(content: Text('已恢复默认设置')),
       );
     }
   }
@@ -273,9 +291,9 @@ class _SettingsPageState extends State<SettingsPage> {
             title: '系统操作',
             children: [
               ListTile(
-                title: const Text('清空缓存'),
+                title: const Text('恢复默认'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: _clearCache,
+                onTap: _restoreDefaults,
               ),
               _buildRestartTile(),
             ],
@@ -322,7 +340,50 @@ class _SettingsPageState extends State<SettingsPage> {
             icon: const Icon(Icons.remove),
             onPressed: value > min ? () => onChanged(value - 1) : null,
           ),
-          Text('$value', style: const TextStyle(fontSize: 16)),
+          GestureDetector(
+            onTap: () {
+              final controller = TextEditingController(text: '$value');
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('设置$title'),
+                  content: TextField(
+                    controller: controller,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: '$min - $max',
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('取消'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final input = int.tryParse(controller.text);
+                        if (input != null) {
+                          final clamped = input.clamp(min, max);
+                          onChanged(clamped);
+                        }
+                        Navigator.pop(context);
+                      },
+                      child: const Text('确定'),
+                    ),
+                  ],
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text('$value', style: const TextStyle(fontSize: 16)),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: value < max ? () => onChanged(value + 1) : null,
