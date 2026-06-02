@@ -40,9 +40,21 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: '/browse',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final path = state.extra as String? ?? '';
-            return HomePage(path: path);
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: HomePage(path: path),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1.0, 0.0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut)),
+                  child: child,
+                );
+              },
+            );
           },
         ),
       ],
