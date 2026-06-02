@@ -11,7 +11,6 @@ import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../utils/date_utils.dart';
 import '../utils/file_type_utils.dart';
-import '../widgets/edge_swipe_back.dart';
 import '../widgets/file_icon.dart';
 import '../widgets/network_log_dialog.dart';
 import 'settings_page.dart';
@@ -523,10 +522,7 @@ class _HomePageState extends State<HomePage> {
         if (didPop) return;
         _handleWillPop(context);
       },
-      child: EdgeSwipeBack(
-        enabled: !_isRoot,
-        onPop: _goBack,
-        child: Scaffold(
+      child: Scaffold(
       appBar: AppBar(
         leading: _isRoot
             ? null
@@ -584,7 +580,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
         ],
-      ),
       ),
       ),
     );
