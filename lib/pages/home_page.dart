@@ -203,7 +203,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.play_circle),
-                title: const Text('网页播放器'),
+                title: const Text('本地播放器'),
                 onTap: () {
                   Navigator.pop(context);
                   _openVideoPlayer(fileInfo);
