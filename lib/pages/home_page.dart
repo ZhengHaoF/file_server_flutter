@@ -33,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   String _currentPath = '';
   String _viewMode = 'list';
   bool _hasDialogOpen = false;
+  DateTime? _lastBackPress;
 
   @override
   void initState() {
@@ -123,29 +124,15 @@ class _HomePageState extends State<HomePage> {
 
   void _enterDirectory(String dirName) {
     final newPath = _currentPath.isNotEmpty ? '$_currentPath/$dirName' : dirName;
-    setState(() {
-      _currentPath = newPath;
-    });
-    _loadFileList();
+    context.push('/browse', extra: newPath);
   }
 
   void _goBack() {
-    final segments = _currentPath.split('/').where((s) => s.isNotEmpty).toList();
-    if (segments.isNotEmpty) {
-      segments.removeLast();
-      final newPath = segments.join('/');
-      setState(() {
-        _currentPath = newPath;
-      });
-      _loadFileList();
-    }
+    context.pop();
   }
 
   void _goToRoot() {
-    setState(() {
-      _currentPath = '';
-    });
-    _loadFileList();
+    context.go('/');
   }
 
   Color get _themeColor {
@@ -507,18 +494,22 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<bool> _handleWillPop() async {
+  void _handleWillPop(BuildContext context) {
     if (_hasDialogOpen) {
       setState(() => _hasDialogOpen = false);
-      return false;
+      Navigator.of(context).pop();
+      return;
     }
 
-    if (!_isRoot) {
-      _goBack();
-      return false;
+    if (_lastBackPress == null ||
+        DateTime.now().difference(_lastBackPress!) > const Duration(seconds: 2)) {
+      _lastBackPress = DateTime.now();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('再按一次返回关闭软件'), duration: Duration(seconds: 2)),
+      );
+    } else {
+      context.pop();
     }
-
-    return true;
   }
 
   @override
@@ -526,21 +517,19 @@ class _HomePageState extends State<HomePage> {
     final files = _viewMode == 'img' ? _getImageFilteredFileList() : _getSortedFileList();
 
     return PopScope(
-      canPop: _isRoot && !_hasDialogOpen,
+      canPop: !_isRoot,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _handleWillPop();
+        _handleWillPop(context);
       },
       child: Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (!_isRoot) {
-              _goBack();
-            }
-          },
-        ),
+        leading: _isRoot
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.pop(),
+              ),
         title: Text(
           _pathDisplayText,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),

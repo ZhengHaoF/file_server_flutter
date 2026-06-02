@@ -13,10 +13,6 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state, child) => child,
       routes: [
         GoRoute(
-          path: '/',
-          builder: (context, state) => const HomePage(),
-        ),
-        GoRoute(
           path: '/settings',
           builder: (context, state) => const SettingsPage(),
         ),
@@ -38,24 +34,18 @@ final GoRouter appRouter = GoRouter(
             );
           },
         ),
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const HomePage(),
+        ),
+        GoRoute(
+          path: '/browse',
+          builder: (context, state) {
+            final path = state.extra as String? ?? '';
+            return HomePage(path: path);
+          },
+        ),
       ],
     ),
   ],
-  redirect: (context, state) {
-    final path = state.matchedLocation;
-    
-    if (path == '/' || 
-        path == '/settings' || 
-        path == '/audio-play' || 
-        path == '/video-play') {
-      return null;
-    }
-    
-    return null;
-  },
-  errorBuilder: (context, state) {
-    final path = state.matchedLocation;
-    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    return HomePage(path: Uri.decodeComponent(cleanPath));
-  },
 );
