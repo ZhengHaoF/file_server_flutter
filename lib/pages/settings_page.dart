@@ -3,7 +3,6 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
-import '../widgets/edge_swipe_back.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -175,8 +174,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return EdgeSwipeBack(
-      child: Scaffold(
+    return Scaffold(
       appBar: AppBar(
         title: const Text('设置'),
         actions: [
@@ -284,8 +282,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildSection({required String title, required List<Widget> children}) {
