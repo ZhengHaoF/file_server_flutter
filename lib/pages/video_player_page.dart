@@ -289,6 +289,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                               ? const Icon(Icons.play_arrow,
                                   color: Colors.green, size: 20)
                               : null,
+                          shape: isActive
+                              ? RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                )
+                              : null,
                           tileColor:
                               isActive ? Colors.green.withValues(alpha: 0.3) : null,
                           onTap: () => _selectVideo(index),
