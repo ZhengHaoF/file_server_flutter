@@ -561,24 +561,21 @@ class _HomePageState extends State<HomePage> {
           else
             _buildGridView(files),
           if (_isLoading)
-            Container(
-              color: Colors.black54,
-              child: Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: Colors.white),
-                      SizedBox(height: 12),
-                      Text('加载中···', style: TextStyle(color: Colors.white)),
-                    ],
-                  ),
+            Center(
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.black87,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: Colors.white),
+                    SizedBox(height: 12),
+                    Text('加载中···', style: TextStyle(color: Colors.white)),
+                  ],
                 ),
               ),
             ),

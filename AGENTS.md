@@ -30,6 +30,8 @@ Flutter 端不是单例状态管理（没有用 Provider/Riverpod），直接 `s
 | 外部唤起 | `url_launcher ^6.3.1`（VLC）、`share_plus ^10.1.4`（分享） |
 | 图片缓存 | `cached_network_image ^3.4.1` |
 | 主题色 | `flutter_colorpicker ^1.1.0` |
+| 图片选择 | `image_picker ^1.1.2` |
+| 路径处理 | `path ^1.9.0` |
 | Lint | `flutter_lints ^6.0.0` |
 
 平台覆盖：Android / iOS / Windows / macOS / Linux / Web。
@@ -50,7 +52,7 @@ flutter_application_1/
 │   │   ├── video_player_page.dart      # 视频播放器（chewie + 上下集）
 │   │   └── audio_player_page.dart      # 音频播放器
 │   ├── router/
-│   │   └── app_router.dart             # GoRouter 配置（/ /settings /audio-play /video-play）
+│   │   └── app_router.dart             # GoRouter 配置（/ /browse /settings /audio-play /video-play）
 │   ├── services/
 │   │   ├── api_service.dart            # 单例，Dio 封装 + 网络日志拦截器
 │   │   ├── storage_service.dart        # 单例，SharedPreferences 封装
@@ -67,6 +69,8 @@ flutter_application_1/
 ├── android/                            # Android 原生壳
 │   └── app/src/main/AndroidManifest.xml
 ├── ios/  macos/  linux/  windows/      # 其他平台
+├── test/                              # Flutter 测试
+│   └── widget_test.dart               # 默认生成的 widget 测试入口
 ├── 网页项目/                           # 独立 Vue 3 Web 项目（不在 Flutter 编译范围内）
 └── pubspec.yaml
 ```
@@ -106,6 +110,8 @@ void main() async {
 ### `services/network_log_service.dart`
 
 - 网络日志单例（`ChangeNotifier`），最多缓存 500 条
+- 两个开关：`enabled`（默认 `true`）和 `showImageRequests`（默认 `true`，关闭后跳过图片类请求以减少日志）
+- 提供 `clear()` 一键清空
 - 弹窗 `NetworkLogDialog` 通过监听它实现实时刷新
 - 加新日志维度：扩展 `NetworkLogEntry` 字段 + 修改 `_NetworkLogInterceptor` 里的 `_record`
 
@@ -219,6 +225,7 @@ void _saveSettings() {
 ### 5. `NetworkLogService` 在生产环境
 
 - 当前 `enabled` 默认 `true`，会记录所有 Dio 请求/响应
+- `showImageRequests` 默认 `true`，关闭后 `_isImageRequest` 会过滤掉 `.png/.jpg/.jpeg/.gif/.webp/.bmp/.svg` 这类带 `!WxH` 后缀的缩略图请求，减少日志量
 - 大响应体（图片二进制）会占内存，必要时调小 `_maxEntries` 或加大小限制
 - 弹窗里没做"按 URL 过滤"功能，目前只展示全部
 
