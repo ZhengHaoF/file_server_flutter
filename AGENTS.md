@@ -25,7 +25,7 @@ Flutter 端不是单例状态管理（没有用 Provider/Riverpod），直接 `s
 | 路由 | `go_router ^14.6.2` |
 | 网络 | `dio ^5.7.0` |
 | 持久化 | `shared_preferences ^2.3.4` |
-| 视频播放 | `video_player ^2.9.2` + `chewie ^1.8.5` |
+| 视频播放 | `media_kit ^1.2.5` + `media_kit_video ^2.0.1` + `media_kit_libs_video ^1.0.7` |
 | 音频播放 | `audioplayers ^6.1.0` |
 | 外部唤起 | `url_launcher ^6.3.1`（VLC）、`share_plus ^10.1.4`（分享） |
 | 图片缓存 | `cached_network_image ^3.4.1` |
@@ -49,7 +49,7 @@ flutter_application_1/
 │   ├── pages/
 │   │   ├── home_page.dart              # 主页（文件列表 + 列表/网格切换 + 各种弹窗）
 │   │   ├── settings_page.dart          # 设置页（显示/服务/系统操作）
-│   │   ├── video_player_page.dart      # 视频播放器（chewie + 上下集）
+│   │   ├── video_player_page.dart      # 视频播放器（media_kit + 上下集）
 │   │   └── audio_player_page.dart      # 音频播放器
 │   ├── router/
 │   │   └── app_router.dart             # GoRouter 配置（/ /browse /settings /audio-play /video-play）
