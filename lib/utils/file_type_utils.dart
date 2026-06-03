@@ -1,6 +1,6 @@
 class FileTypeUtils {
   static const List<String> _videoTypes = ['.MP4', '.AVI', '.MOV', '.FLV', '.MKV', '.TS'];
-  static const List<String> _imgTypes = ['.JPG', '.JPEG', '.PNG', '.WEBP'];
+  static const List<String> _imgTypes = ['.JPG', '.JPEG', '.PNG', '.WEBP', '.GIF'];
   static const List<String> _psTypes = ['.PSD'];
   static const List<String> _zipTypes = ['.RAR', '.ZIP', '.7Z'];
   static const List<String> _audioTypes = ['.WAV', '.MP3', '.OGG'];
@@ -40,6 +40,13 @@ class FileTypeUtils {
   static bool isExcel(String? fileSuffix) {
     if (fileSuffix == null || fileSuffix.isEmpty) return false;
     return _excelTypes.contains(fileSuffix.toUpperCase());
+  }
+
+  static const List<String> _textTypes = ['.TXT', '.LOG', '.MD', '.JSON', '.XML', '.CSV', '.YAML', '.YML', '.SQL', '.JS', '.TS', '.DART', '.PY', '.JAVA', '.C', '.CPP', '.H', '.CSS', '.HTML', '.SH', '.BAT', '.INI', '.CONF', '.CFG', '.ENV', '.GITIGNORE'];
+
+  static bool isText(String? fileSuffix) {
+    if (fileSuffix == null || fileSuffix.isEmpty) return false;
+    return _textTypes.contains(fileSuffix.toUpperCase());
   }
 
   static String determineFileType(String? suffix) {

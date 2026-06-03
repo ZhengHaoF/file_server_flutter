@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../pages/home_page.dart';
 import '../pages/audio_player_page.dart';
+import '../pages/text_viewer_page.dart';
 import '../pages/video_player_page.dart';
 import '../pages/settings_page.dart';
 
@@ -24,6 +25,16 @@ final GoRouter appRouter = GoRouter(
           },
         ),
         GoRoute(
+          path: '/text-view',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>? ?? {};
+            return TextViewerPage(
+              url: extra['url'] ?? '',
+              fileName: extra['fileName'] ?? '',
+            );
+          },
+        ),
+        GoRoute(
           path: '/video-play',
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>? ?? {};
@@ -36,7 +47,21 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: '/',
-          builder: (context, state) => const HomePage(),
+          pageBuilder: (context, state) {
+            return CustomTransitionPage(
+              key: state.pageKey,
+              child: const HomePage(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1.0, 0.0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut)),
+                  child: child,
+                );
+              },
+            );
+          },
         ),
         GoRoute(
           path: '/browse',

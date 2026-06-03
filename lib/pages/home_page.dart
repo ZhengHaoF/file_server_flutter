@@ -163,6 +163,11 @@ class _HomePageState extends State<HomePage> {
       _showMediaActions(fileInfo, index);
     } else if (FileTypeUtils.isAudio(suffix)) {
       context.push('/audio-play?url=${Uri.encodeComponent(fileInfo.url ?? '')}');
+    } else if (FileTypeUtils.isText(suffix)) {
+      context.push('/text-view', extra: {
+        'url': fileInfo.url ?? '',
+        'fileName': fileInfo.name,
+      });
     } else {
       _showFileActions(fileInfo, index);
     }
@@ -404,11 +409,14 @@ class _HomePageState extends State<HomePage> {
       return '${f.url}!${w}x$w';
     }).toList();
 
+    final heroTags = imageFiles.map((f) => 'grid_image_${f.name}').toList();
+
     setState(() => _hasDialogOpen = true);
     showDialog(
       context: context,
       builder: (context) => _ImagePreviewDialog(
         imageUrls: imageUrls,
+        heroTags: heroTags,
         initialIndex: currentIndex >= 0 ? currentIndex : 0,
       ),
     ).then((_) {
@@ -556,10 +564,10 @@ class _HomePageState extends State<HomePage> {
         children: [
           if (files.isEmpty && !_isLoading)
             const Center(child: Text('当前数据为空'))
-          else if (_viewMode == 'list')
-            _buildListView(files)
           else
-            _buildGridView(files),
+            _viewMode == 'list'
+                ? _buildListView(files)
+                : _buildGridView(files),
           if (_isLoading)
             Center(
               child: Container(
@@ -705,17 +713,20 @@ class _HomePageState extends State<HomePage> {
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: showPreview && previewUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        previewUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (context, error, stackTrace) => FileIcon(
-                          suffix: file.suffix,
-                          isDirectory: file.isDirectory,
-                          size: 48,
-                          color: _themeColor,
+                  ? Hero(
+                      tag: 'grid_image_${file.name}',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          previewUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (context, error, stackTrace) => FileIcon(
+                            suffix: file.suffix,
+                            isDirectory: file.isDirectory,
+                            size: 48,
+                            color: _themeColor,
+                          ),
                         ),
                       ),
                     )
@@ -745,10 +756,12 @@ class _HomePageState extends State<HomePage> {
 
 class _ImagePreviewDialog extends StatefulWidget {
   final List<String> imageUrls;
+  final List<String> heroTags;
   final int initialIndex;
 
   const _ImagePreviewDialog({
     required this.imageUrls,
+    required this.heroTags,
     required this.initialIndex,
   });
 
@@ -788,11 +801,14 @@ class _ImagePreviewDialogState extends State<_ImagePreviewDialog> {
             itemBuilder: (context, index) {
               return InteractiveViewer(
                 child: Center(
-                  child: Image.network(
-                    widget.imageUrls[index],
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.broken_image, color: Colors.white, size: 64),
+                  child: Hero(
+                    tag: widget.heroTags[index],
+                    child: Image.network(
+                      widget.imageUrls[index],
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.broken_image, color: Colors.white, size: 64),
+                    ),
                   ),
                 ),
               );
