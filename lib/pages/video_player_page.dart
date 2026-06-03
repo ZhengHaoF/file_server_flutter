@@ -203,7 +203,15 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
             children: [
               Expanded(
                 child: _isInitialized
-                    ? Video(controller: _controller)
+                    ? MaterialVideoControlsTheme(
+                        normal: MaterialVideoControlsThemeData(
+                          padding: const EdgeInsets.only(bottom: 24),
+                        ),
+                        fullscreen: MaterialVideoControlsThemeData(
+                          padding: const EdgeInsets.only(bottom: 24),
+                        ),
+                        child: Video(controller: _controller),
+                      )
                     : const Center(
                         child: CircularProgressIndicator(
                           color: Colors.white,
