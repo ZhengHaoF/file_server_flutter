@@ -91,6 +91,25 @@ class ApiService {
     return true;
   }
 
+  Future<bool> renameFile(String oldPath, String newPath) async {
+    try {
+      final response = await _dio.post(
+        '$_serverBaseUrl/renameFile',
+        data: {'oldPath': oldPath, 'newPath': newPath},
+      );
+
+      _checkResponse(response);
+      return true;
+    } on DioException catch (e) {
+      String msg = '重命名失败 (${e.response?.statusCode})';
+      final data = e.response?.data;
+      if (data is Map<String, dynamic> && data.containsKey('msg')) {
+        msg = data['msg'].toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
   Future<Map<String, dynamic>> restartServer(String pwd) async {
     final response = await _dio.post(
       '$_serverBaseUrl/restartServer',

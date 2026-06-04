@@ -289,6 +289,14 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('重命名'),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmRename(fileInfo);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text('删除', style: TextStyle(color: Colors.red)),
               onTap: () {
@@ -333,6 +341,14 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('重命名'),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmRename(fileInfo);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
               title: const Text('删除', style: TextStyle(color: Colors.red)),
               onTap: () {
@@ -366,6 +382,14 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 Navigator.pop(context);
                 _copyUrl(fileInfo);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('重命名'),
+              onTap: () {
+                Navigator.pop(context);
+                _confirmRename(fileInfo);
               },
             ),
             ListTile(
@@ -491,6 +515,66 @@ class _HomePageState extends State<HomePage> {
         final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('删除失败: $msg')),
+        );
+      }
+    }
+  }
+
+  void _confirmRename(FileInfo fileInfo) {
+    final controller = TextEditingController(text: fileInfo.name);
+
+    setState(() => _hasDialogOpen = true);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('重命名'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: fileInfo.isDirectory ? '文件夹名称' : '文件名称',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _renameFile(fileInfo, controller.text);
+            },
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      if (mounted) setState(() => _hasDialogOpen = false);
+    });
+  }
+
+  Future<void> _renameFile(FileInfo fileInfo, String newName) async {
+    if (newName.isEmpty || newName == fileInfo.name) return;
+
+    final oldPath = fileInfo.path ?? '';
+    final lastSlash = oldPath.lastIndexOf('/');
+    final parentPath = lastSlash >= 0 ? oldPath.substring(0, lastSlash + 1) : '';
+    final newPath = '$parentPath$newName';
+
+    try {
+      await _apiService.renameFile(oldPath, newPath);
+      _loadFileList();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('重命名成功')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('重命名失败: $msg')),
         );
       }
     }
