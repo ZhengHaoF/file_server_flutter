@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
@@ -9,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/file_info.dart';
 import '../services/api_service.dart';
+import '../services/download_service.dart';
 import '../services/storage_service.dart';
 import '../utils/date_utils.dart';
 import '../utils/file_type_utils.dart';
@@ -460,9 +462,25 @@ class _HomePageState extends State<HomePage> {
 
   void _downloadFile(FileInfo fileInfo) async {
     final url = fileInfo.url ?? '';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (kIsWeb) {
+      // Web 端降级到浏览器下载
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } else {
+      // 非 Web 端使用内置下载管理
+      DownloadService().startDownload(
+        url,
+        fileInfo.name,
+        fileInfo.path ?? '',
+        fileSize: fileInfo.sizeRow,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('已加入下载队列')),
+        );
+      }
     }
   }
 
@@ -640,6 +658,12 @@ class _HomePageState extends State<HomePage> {
         ),
         centerTitle: true,
         actions: [
+          if (!kIsWeb)
+            IconButton(
+              icon: const Icon(Icons.download),
+              tooltip: '下载管理',
+              onPressed: () => context.push('/downloads'),
+            ),
           IconButton(
             icon: const Icon(Icons.bug_report),
             tooltip: '网络日志',

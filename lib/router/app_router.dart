@@ -6,6 +6,7 @@ import '../pages/audio_player_page.dart';
 import '../pages/text_viewer_page.dart';
 import '../pages/video_player_page.dart';
 import '../pages/settings_page.dart';
+import '../pages/download_manager_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -13,6 +14,10 @@ final GoRouter appRouter = GoRouter(
     ShellRoute(
       builder: (context, state, child) => child,
       routes: [
+        GoRoute(
+          path: '/downloads',
+          builder: (context, state) => const DownloadManagerPage(),
+        ),
         GoRoute(
           path: '/settings',
           builder: (context, state) => const SettingsPage(),
