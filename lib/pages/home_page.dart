@@ -125,7 +125,7 @@ class _HomePageState extends State<HomePage> {
   String get _pathDisplayText {
     if (_currentPath.isEmpty) return '根目录';
     final segments = _currentPath.split('/').where((s) => s.isNotEmpty).toList();
-    return segments.join('/');
+    return segments.last;
   }
 
   bool get _isRoot => _currentPath.isEmpty;
