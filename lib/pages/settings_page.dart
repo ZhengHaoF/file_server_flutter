@@ -66,7 +66,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _storage.serverBaseUrl = _serverBaseUrl;
     _apiService.setServerUrl(_serverBaseUrl);
 
-    final colorHex = _themeColor.value.toRadixString(16).substring(2).toUpperCase();
+    final colorHex = _themeColor.toARGB32().toRadixString(16).substring(2).toUpperCase();
     _storage.themeColor = '#$colorHex';
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -158,11 +158,20 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    final result = await _apiService.restartServer(pwd);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['msg'] ?? '操作完成')),
-      );
+    try {
+      final result = await _apiService.restartServer(pwd);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['msg'] ?? '操作完成')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
+      }
     }
   }
 

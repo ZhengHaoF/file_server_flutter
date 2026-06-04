@@ -27,8 +27,9 @@ Flutter 端不是单例状态管理（没有用 Provider/Riverpod），直接 `s
 | 持久化 | `shared_preferences ^2.3.4` |
 | 视频播放 | `media_kit ^1.2.5` + `media_kit_video ^2.0.1` + `media_kit_libs_video ^1.0.7` |
 | 音频播放 | `audioplayers ^6.1.0` |
-| 外部唤起 | `url_launcher ^6.3.1`（VLC）、`share_plus ^10.1.4`（分享） |
+| 外部唤起 | `url_launcher ^6.3.1`（VLC） |
 | 图片缓存 | `cached_network_image ^3.4.1` |
+| 图片预览 | `photo_view ^0.15.0` |
 | 主题色 | `flutter_colorpicker ^1.1.0` |
 | 图片选择 | `image_picker ^1.1.2` |
 | 路径处理 | `path ^1.9.0` |
@@ -49,10 +50,11 @@ flutter_application_1/
 │   ├── pages/
 │   │   ├── home_page.dart              # 主页（文件列表 + 列表/网格切换 + 各种弹窗）
 │   │   ├── settings_page.dart          # 设置页（显示/服务/系统操作）
-│   │   ├── video_player_page.dart      # 视频播放器（media_kit + 上下集）
-│   │   └── audio_player_page.dart      # 音频播放器
+│   │   ├── video_player_page.dart      # 视频播放器（media_kit + 上下集 + 音轨切换）
+│   │   ├── audio_player_page.dart      # 音频播放器
+│   │   └── text_viewer_page.dart       # 文本文件查看器（支持 .txt/.md/.json/.dart 等）
 │   ├── router/
-│   │   └── app_router.dart             # GoRouter 配置（/ /browse /settings /audio-play /video-play）
+│   │   └── app_router.dart             # GoRouter 配置（/ /browse /settings /audio-play /video-play /text-view）
 │   ├── services/
 │   │   ├── api_service.dart            # 单例，Dio 封装 + 网络日志拦截器
 │   │   ├── storage_service.dart        # 单例，SharedPreferences 封装
@@ -86,12 +88,13 @@ flutter_application_1/
 ```dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();    // media_kit 必须在任何 Player 创建前初始化
   await StorageService().init();   // 必须先初始化，后续服务才能用
   runApp(const MyApp());
 }
 ```
 
-`StorageService.init()` 完成前，**不要**触发任何 `ApiService` 调用。
+`StorageService.init()` 完成前，**不要**触发任何 `ApiService` 调用。`MediaKit.ensureInitialized()` 必须在 `main()` 中最先调用。
 
 ### `services/storage_service.dart`
 
@@ -105,27 +108,42 @@ void main() async {
 - 持有一个 Dio 实例 + 网络日志拦截器
 - `_serverBaseUrl` **不要**用硬编码默认值，必须从 `StorageService().serverBaseUrl` 读
 - `setServerUrl(url)` 同步更新内存字段和持久化（**两个都要写**）
+- `_checkResponse(response)` 统一检查响应状态码，非 2xx 时从 body 提取 `msg` 抛异常
+- `getFileUrl(path, name)` / `getVideoPreviewUrl(path)` 辅助方法用于拼接文件 URL
 - 加新接口：在类里加一个 `Future` 方法，URL 用 `'$_serverBaseUrl/xxx'`
+- `_NetworkLogInterceptor`（Dio 拦截器）定义在本文件底部，负责记录请求/响应到 `NetworkLogService`
 
 ### `services/network_log_service.dart`
 
-- 网络日志单例（`ChangeNotifier`），最多缓存 500 条
-- 两个开关：`enabled`（默认 `true`）和 `showImageRequests`（默认 `true`，关闭后跳过图片类请求以减少日志）
+- 本文件包含 `NetworkLogEntry` 数据类 + `NetworkLogService` 单例（`ChangeNotifier`），最多缓存 500 条
+- `NetworkLogEntry` 包含 timestamp / method / url / headers / body / statusCode / durationMs / isRequestError 等字段，以及多个 `formatted*` 格式化 getter
+- 两个开关：`enabled`（默认 `true`）和 `showImageRequests`（默认 `true`，关闭后跳过带 `!WxH` 后缀的图片缩略图请求）
 - 提供 `clear()` 一键清空
 - 弹窗 `NetworkLogDialog` 通过监听它实现实时刷新
-- 加新日志维度：扩展 `NetworkLogEntry` 字段 + 修改 `_NetworkLogInterceptor` 里的 `_record`
+- 加新日志维度：扩展 `NetworkLogEntry` 字段 + 修改 `api_service.dart` 里 `_NetworkLogInterceptor` 的 `_record` 方法
 
 ### `pages/home_page.dart`
 
 - 主页的 `ApiService` 实例字段（`final ApiService _apiService = ApiService();`）—— 因为是单例，写法上 `new` 多少次都返回同一个，**不要改成构造参数注入**
 - 视图模式（`list` / `img`）、排序、过滤、文件点击/长按动作、播放方式选择都集中在这一个文件
+- 图片文件点击后弹出 `_showMediaActions` 底部弹窗，支持预览/复制链接/下载/删除
+- 图片预览使用 `photo_view` 实现 `_ImagePreviewDialog`（支持手势缩放 + 左右滑动），网格视图带 Hero 动画
+- 文本文件（`.txt/.md/.json/.dart` 等）点击后跳转 `/text-view` 路由
 - 添加新弹窗时注意 `_hasDialogOpen` 状态（控制返回键拦截）
+- 错误处理：404 自动回根目录，其他错误显示 SnackBar
 
 ### `pages/settings_page.dart`
 
 - 三个区块：**服务设置 / 显示设置 / 系统操作**
 - 保存按钮是 AppBar 上的 `TextButton`（不是 ListTile）
 - 加新设置项：在对应区块里加一行，状态变量在 `initState` 读、`_saveSettings` 写
+
+### `pages/text_viewer_page.dart`
+
+- 文本文件查看器，接收 `url` + `fileName` 参数
+- 使用独立的 `Dio` 实例（非单例 `ApiService`）以 `ResponseType.plain` 加载文本内容
+- 支持 `.txt / .log / .md / .json / .xml / .csv / .yaml / .sql / .js / .ts / .dart / .py` 等扩展名
+- 内容通过 `SelectableText` 展示，支持复制选中文本
 
 ---
 
@@ -249,10 +267,13 @@ void _saveSettings() {
 
 ## 最近一次重大变更（Agent 应该知道的历史）
 
-1. **网络日志功能**：通过 `Dio Interceptor` + 单例 `NetworkLogService` + `NetworkLogDialog` 实现，主页 AppBar 有 `bug_report` 按钮
+1. **网络日志功能**：通过 `Dio Interceptor`（`_NetworkLogInterceptor` 在 `api_service.dart` 底部） + 单例 `NetworkLogService`（含 `NetworkLogEntry` 数据类） + `NetworkLogDialog` 实现，主页 AppBar 有 `bug_report` 按钮
 2. **可配置服务器地址**：默认 `http://localhost:3000`，存储在 `SharedPreferences`，设置页"服务设置"区块可改
 3. **AndroidManifest 补全**：补了 `INTERNET` 权限和 `usesCleartextTraffic="true"`，修了 release APK 网络不通的问题
 4. **网络日志 URL 完整显示**：列表项的 URL 从 `maxLines: 1 + ellipsis` 改成 `SelectableText` 不限行
+5. **图片预览功能**：使用 `photo_view` 实现手势缩放 + 左右滑动的图片浏览弹窗 `_ImagePreviewDialog`，网格视图带 Hero 动画
+6. **文本文件查看器**：新增 `TextViewerPage`，通过 `/text-view` 路由访问，支持查看 `.txt / .md / .json / .dart` 等多种文本文件
+7. **Lint 清理**：移除未使用的 `share_plus` 导入和 `_goBack` 方法，修复 `deprecated_member_use`（`Color.value` → `.toARGB32()`，`withOpacity` → `.withValues()`）和 `unnecessary_underscores`
 
 ---
 

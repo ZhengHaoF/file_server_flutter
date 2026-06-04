@@ -35,60 +35,70 @@ class ApiService {
     return '$_serverBaseUrl/getVideoPreview/$filePath';
   }
 
+  /// 统一检查响应状态码，非 2xx 时从 response body 提取 msg 抛出异常
+  void _checkResponse(Response response) {
+    if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
+      return;
+    }
+    String msg = '请求失败 (${response.statusCode})';
+    final data = response.data;
+    if (data is Map<String, dynamic> && data.containsKey('msg')) {
+      msg = data['msg'].toString();
+    }
+    throw Exception(msg);
+  }
+
   Future<List<FileInfo>> getFileList(String currentPath) async {
     try {
       final response = await _dio.get(
         '$_serverBaseUrl/list/${Uri.encodeComponent(currentPath)}',
       );
 
-      if (response.statusCode == 200) {
-        final data = response.data;
-        final list = data['list'] as List<dynamic>?;
+      _checkResponse(response);
 
-        if (list == null) return [];
+      final data = response.data;
+      final list = data['list'] as List<dynamic>?;
 
-        return list.map((item) {
-          return FileInfo.fromJson(
-            item as Map<String, dynamic>,
-            currentPath,
-            _serverBaseUrl,
-          );
-        }).toList();
-      }
+      if (list == null) return [];
 
-      return [];
+      return list.map((item) {
+        return FileInfo.fromJson(
+          item as Map<String, dynamic>,
+          currentPath,
+          _serverBaseUrl,
+        );
+      }).toList();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         rethrow;
       }
-      throw Exception('获取文件列表失败: ${e.message}');
+      String msg = '获取文件列表失败: ${e.message}';
+      final data = e.response?.data;
+      if (data is Map<String, dynamic> && data.containsKey('msg')) {
+        msg = data['msg'].toString();
+      }
+      throw Exception(msg);
     }
   }
 
   Future<bool> deleteFile(String filePath) async {
-    try {
-      final response = await _dio.post(
-        '$_serverBaseUrl/delFile',
-        data: {'filePath': filePath},
-      );
+    final response = await _dio.post(
+      '$_serverBaseUrl/delFile',
+      data: {'filePath': filePath},
+    );
 
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
+    _checkResponse(response);
+    return true;
   }
 
   Future<Map<String, dynamic>> restartServer(String pwd) async {
-    try {
-      final response = await _dio.post(
-        '$_serverBaseUrl/restartServer',
-        data: {'pwd': pwd},
-      );
+    final response = await _dio.post(
+      '$_serverBaseUrl/restartServer',
+      data: {'pwd': pwd},
+    );
 
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      return {'msg': '重启失败: $e'};
-    }
+    _checkResponse(response);
+    return response.data as Map<String, dynamic>;
   }
 }
 

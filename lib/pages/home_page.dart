@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/file_info.dart';
@@ -68,6 +69,11 @@ class _HomePageState extends State<HomePage> {
       });
       if (e is Exception && e.toString().contains('404')) {
         _goToRoot();
+      } else if (mounted) {
+        final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
       }
     }
   }
@@ -125,10 +131,6 @@ class _HomePageState extends State<HomePage> {
   void _enterDirectory(String dirName) {
     final newPath = _currentPath.isNotEmpty ? '$_currentPath/$dirName' : dirName;
     context.push('/browse', extra: newPath);
-  }
-
-  void _goBack() {
-    context.pop();
   }
 
   void _goToRoot() {
@@ -474,12 +476,21 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _deleteFile(FileInfo fileInfo) async {
     final filePath = fileInfo.path ?? '';
-    final success = await _apiService.deleteFile(filePath);
-    if (success) {
-      _loadFileList();
+    try {
+      final success = await _apiService.deleteFile(filePath);
+      if (success) {
+        _loadFileList();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('删除成功')),
+          );
+        }
+      }
+    } catch (e) {
       if (mounted) {
+        final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('删除成功')),
+          SnackBar(content: Text('删除失败: $msg')),
         );
       }
     }
@@ -791,28 +802,24 @@ class _ImagePreviewDialogState extends State<_ImagePreviewDialog> {
     return Dialog.fullscreen(
       child: Stack(
         children: [
-          Container(color: Colors.black),
-          PageView.builder(
-            controller: _pageController,
+          PhotoViewGallery.builder(
+            pageController: _pageController,
             itemCount: widget.imageUrls.length,
-            onPageChanged: (index) {
-              setState(() => _currentIndex = index);
+            onPageChanged: (index) => setState(() => _currentIndex = index),
+            builder: (context, index) {
+              return PhotoViewGalleryPageOptions(
+                 imageProvider: NetworkImage(widget.imageUrls[index]),
+                 heroAttributes: PhotoViewHeroAttributes(tag: widget.heroTags[index]),
+                 minScale: PhotoViewComputedScale.contained,
+                 maxScale: PhotoViewComputedScale.covered * 5,
+                 errorBuilder: (context, error, stackTrace) =>
+                     const Icon(Icons.broken_image, color: Colors.white, size: 64),
+               );
             },
-            itemBuilder: (context, index) {
-              return InteractiveViewer(
-                child: Center(
-                  child: Hero(
-                    tag: widget.heroTags[index],
-                    child: Image.network(
-                      widget.imageUrls[index],
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.broken_image, color: Colors.white, size: 64),
-                    ),
-                  ),
-                ),
-              );
-            },
+            backgroundDecoration: const BoxDecoration(color: Colors.black),
+            loadingBuilder: (context, event) => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
           ),
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,

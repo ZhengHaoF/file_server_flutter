@@ -60,7 +60,7 @@ class _NetworkLogDialogState extends State<NetworkLogDialog> {
               Expanded(
                 child: ListView.separated(
                   itemCount: logs.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, index) => _LogTile(entry: logs[index]),
                 ),
               ),
@@ -131,7 +131,7 @@ class _LogTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: _statusColor.withOpacity(0.15),
+                color: _statusColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(

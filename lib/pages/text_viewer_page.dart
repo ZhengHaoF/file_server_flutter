@@ -43,8 +43,9 @@ class _TextViewerPageState extends State<TextViewerPage> {
       }
     } catch (e) {
       if (mounted) {
+        final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
         setState(() {
-          _error = '加载失败: $e';
+          _error = '加载失败: $msg';
           _isLoading = false;
         });
       }
