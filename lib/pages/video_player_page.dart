@@ -90,6 +90,12 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     }
   }
 
+  void _playPrevious() {
+    if (_currentIndex > 0) {
+      _selectVideo(_currentIndex - 1);
+    }
+  }
+
   void _playNext() {
     if (_currentIndex < widget.videoList.length - 1) {
       _selectVideo(_currentIndex + 1);
@@ -197,12 +203,12 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           ),
         ],
       ),
-      body: Stack(
+      body: Column(
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: _isInitialized
+          Expanded(
+            child: Stack(
+              children: [
+                _isInitialized
                     ? MaterialVideoControlsTheme(
                         normal: MaterialVideoControlsThemeData(
                           padding: const EdgeInsets.only(bottom: 24),
@@ -217,10 +223,50 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                           color: Colors.white,
                         ),
                       ),
-              ),
-            ],
+                if (_showPlaylist) _buildPlaylist(),
+              ],
+            ),
           ),
-          if (_showPlaylist) _buildPlaylist(),
+          _buildBottomControls(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomControls() {
+    final hasPrevious = _currentIndex > 0;
+    final hasNext = _currentIndex < widget.videoList.length - 1;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2a2a2a),
+        border: Border(
+          top: BorderSide(color: Colors.white24, width: 0.5),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: Icon(
+              Icons.skip_previous,
+              color: hasPrevious ? Colors.white : Colors.white30,
+            ),
+            onPressed: hasPrevious ? _playPrevious : null,
+            tooltip: '上一个',
+            iconSize: 28,
+          ),
+          const SizedBox(width: 24),
+          IconButton(
+            icon: Icon(
+              Icons.skip_next,
+              color: hasNext ? Colors.white : Colors.white30,
+            ),
+            onPressed: hasNext ? _playNext : null,
+            tooltip: '下一个',
+            iconSize: 28,
+          ),
         ],
       ),
     );
