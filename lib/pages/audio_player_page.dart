@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 class AudioPlayerPage extends StatefulWidget {
   final String url;
@@ -28,32 +28,33 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
 
   Future<void> _initPlayer() async {
     _subscriptions.add(
-      _player.onDurationChanged.listen((duration) {
-        if (mounted) setState(() => _duration = duration);
+      _player.durationStream.listen((duration) {
+        if (mounted && duration != null) {
+          setState(() => _duration = duration);
+        }
       }),
     );
     _subscriptions.add(
-      _player.onPositionChanged.listen((position) {
+      _player.positionStream.listen((position) {
         if (mounted) setState(() => _position = position);
       }),
     );
     _subscriptions.add(
-      _player.onPlayerStateChanged.listen((state) {
-        if (mounted) setState(() => _isPlaying = state == PlayerState.playing);
-      }),
-    );
-    _subscriptions.add(
-      _player.onPlayerComplete.listen((_) {
+      _player.playerStateStream.listen((state) {
         if (mounted) {
-          setState(() {
-            _isPlaying = false;
-            _position = Duration.zero;
-          });
+          setState(() => _isPlaying = state.playing);
+          // 播放完成处理
+          if (state.processingState == ProcessingState.completed) {
+            setState(() {
+              _isPlaying = false;
+              _position = Duration.zero;
+            });
+          }
         }
       }),
     );
 
-    await _player.setSourceUrl(widget.url);
+    await _player.setUrl(widget.url);
   }
 
   @override
@@ -131,7 +132,7 @@ class _AudioPlayerPageState extends State<AudioPlayerPage> {
                       if (_isPlaying) {
                         await _player.pause();
                       } else {
-                        await _player.resume();
+                        await _player.play();
                       }
                     },
                   ),
